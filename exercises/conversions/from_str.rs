@@ -11,18 +11,19 @@
 
 use std::num::ParseIntError;
 use std::str::FromStr;
+use crate::ParsePersonError::ParseInt;
 
 #[derive(Debug, PartialEq)]
 struct Person {
     name: String,
-    age: usize,
+    age: u8,
 }
 
 // We will use this error type for the `FromStr` implementation.
 #[derive(Debug, PartialEq)]
 enum ParsePersonError {
     // Empty input string
-    Empty,
+    //Empty,
     // Incorrect number of fields
     BadLen,
     // Empty name field
@@ -30,8 +31,6 @@ enum ParsePersonError {
     // Wrapped error from parse::<usize>()
     ParseInt(ParseIntError),
 }
-
-// I AM NOT DONE
 
 // Steps:
 // 1. If the length of the provided string is 0, an error should be returned
@@ -51,22 +50,43 @@ enum ParsePersonError {
 
 impl FromStr for Person {
     type Err = ParsePersonError;
-    fn from_str(s: &str) -> Result<Person, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.is_empty(){
+            return Err(ParsePersonError::NoName);
+        }
+        let splitted_item=s.split(',').collect::<Vec<&str>>();
+        let(name,age)=match &splitted_item[..]{
+            [name,age]=>(
+                name.to_string(),
+                age.parse().map_err(ParsePersonError::ParseInt)?,
+            ),
+            _=>return Err(ParsePersonError::BadLen)
+        };
+
+        if name.is_empty(){
+            return Err(ParsePersonError::NoName)
+        };
+
+        Ok(Person{
+            name:name.into(),
+            age
+        })
     }
 }
 
 fn main() {
-    let p = "Mark,20".parse::<Person>().unwrap();
-    println!("{:?}", p);
+    let p = "Mark,20".parse::<Person>();
+    println!("{p:?}");
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ParsePersonError::*;
 
     #[test]
     fn empty_input() {
-        assert_eq!("".parse::<Person>(), Err(ParsePersonError::Empty));
+        assert_eq!("".parse::<Person>(), Err(ParsePersonError::NoName));
     }
     #[test]
     fn good_input() {
