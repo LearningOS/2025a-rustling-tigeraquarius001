@@ -43,6 +43,7 @@ mod Foo {
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
